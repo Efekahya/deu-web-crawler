@@ -16,6 +16,7 @@ GRAPH = nx.DiGraph()
 
 
 def getPageContent(url):
+    # get the HTML content of the given url
     page = requests.get(url, headers=HEADERS)
     return BeautifulSoup(page.content, 'html.parser')
 
@@ -44,12 +45,13 @@ def filterLinks(links):
     ]
     for link in links:
         parsedLink = link.get('href')
-        # if link is external link and not in links list add it to links list and it is not a file
+        # check if the link is valid internal link and not in the crawledURLs list
         if parsedLink and 'deu.edu.tr' in parsedLink and parsedLink not in crawledURLs and parsedLink not in filteredLinks and not parsedLink.endswith(tuple(blockedFileExtensions)):
             filteredLinks.append(parsedLink)
     return filteredLinks
 
 
+# get the links from the given HTML content
 def getLinks(content):
     if not content:
         return []
@@ -60,10 +62,10 @@ def getLinks(content):
 
 def getWords(content):
     words = []
-    # Extract the text
+    # extract the text
     text = content.get_text()
 
-    # Split the text into tokens
+    # split the text into tokens
     tokens = text.split()
     for word in tokens:
         # append the word and its frequency
@@ -83,7 +85,7 @@ def crawl(url, depth):
     links = getLinks(content)
     words = getWords(content)
 
-    # Add the edges to the graph
+    # add the edges to the graph for visualization
     for link in links:
         GRAPH.add_edge(url, link)
 
@@ -105,6 +107,9 @@ def crawl(url, depth):
                 print(f'An error occurred: {str(e)} {url}')
 
 
+# Crawl the given URL with the given depth
+# This will only crawl the "deu.edu.tr" and its subdomains
+# Making the depth bigger than 2 will take a lot of time to finish
 crawl(URL, 2)
 
 
@@ -115,7 +120,7 @@ def printDataAsTable(wordsPerUrl):
     # count every word and its url
     count = Counter(wordList).most_common(250)
 
-    # how many pages that word is in
+    # count how much urls has the word in it
     for word, freq in count:
         page_count = 0
         for url in wordsPerUrl:
@@ -146,6 +151,7 @@ generateWordCloud()
 
 def calculateDegreeCentrality():
     degreeCentrality = nx.degree_centrality(GRAPH)
+    # sort the dictionary by value in descending order
     sortedDegreeCentrality = sorted(
         degreeCentrality.items(), key=lambda x: x[1], reverse=True)
 
@@ -154,6 +160,7 @@ def calculateDegreeCentrality():
 
 def calculateClosenessCentrality():
     closenessCentrality = nx.closeness_centrality(GRAPH)
+    # sort the dictionary by value in descending order
     sortedClosenessCentrality = sorted(
         closenessCentrality.items(), key=lambda x: x[1], reverse=True)
 
@@ -162,6 +169,7 @@ def calculateClosenessCentrality():
 
 def calculateBetweennessCentrality():
     betweennessCentrality = nx.betweenness_centrality(GRAPH)
+    # sort the dictionary by value in descending order
     sortedBetweennessCentrality = sorted(
         betweennessCentrality.items(), key=lambda x: x[1], reverse=True)
 
@@ -186,7 +194,7 @@ def exportCentralityAsTable(centralityData, filename):
                       cellLoc='left', loc='center')
     table.auto_set_font_size(False)
     table.set_fontsize(8)
-    table.scale(1, 1.5)  # Adjust the scale to fit the content
+    table.scale(1, 1.5)
     plt.savefig(filename, bbox_inches='tight')
     plt.close()
 
